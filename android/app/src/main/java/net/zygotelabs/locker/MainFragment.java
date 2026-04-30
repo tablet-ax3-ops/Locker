@@ -22,6 +22,7 @@ import android.widget.CheckBox;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainFragment extends Fragment  {
 	private CheckBox checkBox;
@@ -37,6 +38,8 @@ public class MainFragment extends Fragment  {
     private int mStackLevel = 0;
 	private static final int ENABLE_PROTECTION_DIALOG_FRAGMENT = 5;
 	private static final int DISABLE_PROTECTION_DIALOG_FRAGMENT = 6;
+    private static final int MIN_FAILED_ATTEMPTS = 10;
+    private static final int DEFAULT_FAILED_ATTEMPTS = 10;
 
 	/* Our preferences */
 	private SharedPreferences settings;
@@ -88,26 +91,24 @@ public class MainFragment extends Fragment  {
 			   @Override 
 			   public void onProgressChanged(SeekBar seekBar, int progress, 
 			     boolean fromUser) { 
-			    // TODO Auto-generated method stub 
-				   if (progress == 0) { 
-					   lockProgress.setProgress(progress += 1);
+				   if (progress < MIN_FAILED_ATTEMPTS) {
+                       progress = MIN_FAILED_ATTEMPTS;
+					   lockProgress.setProgress(progress);
 				   }
 				   seekTextValue.setText(String.valueOf(progress));
-				   editor.putInt("unlockLimit",  lockProgress.getProgress());
+				   editor.putInt("unlockLimit", progress);
 				   editor.commit();
 				
 			   }
 
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
-				
+				// No-op.
 			}
 
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
-				
+				// No-op.
 			}  
 			   });
 		updateAdminCheck();
@@ -151,15 +152,20 @@ public class MainFragment extends Fragment  {
             startActivityForResult(intent, REQUEST_CODE_ENABLE_ADMIN);
             
 	    }else {
-	    	 mDPM.removeActiveAdmin(mDeviceAdmin);
-	    	 adjustAdminUI(false);
+	    	 disableLockProtection();
 	    }
 	}
 	
 	private void updateAdminCheck(){   
 		adjustAdminUI(isActiveAdmin());
 
-    	lockProgress.setProgress(settings.getInt("unlockLimit", 5));
+        int savedLimit = settings.getInt("unlockLimit", DEFAULT_FAILED_ATTEMPTS);
+        if (savedLimit < MIN_FAILED_ATTEMPTS) {
+            savedLimit = MIN_FAILED_ATTEMPTS;
+            editor.putInt("unlockLimit", savedLimit);
+            editor.commit();
+        }
+    	lockProgress.setProgress(savedLimit);
     	
 	}
 	
@@ -169,13 +175,16 @@ public class MainFragment extends Fragment  {
     	if (isProtected){
 			statusLayout.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorGreen));
     		statusTextTitle.setText(getActivity().getString(R.string.protect));
-    		int unlockLimit = settings.getInt("unlockLimit", 5);
+    		int unlockLimit = settings.getInt("unlockLimit", DEFAULT_FAILED_ATTEMPTS);
+            if (unlockLimit < MIN_FAILED_ATTEMPTS) {
+                unlockLimit = MIN_FAILED_ATTEMPTS;
+            }
     		statusTextSummary.setText(getActivity().getString(R.string.protected_summary_one)
     				+ " " + Integer.toString(unlockLimit) + " "
     				+ getActivity().getString(R.string.protected_summary_two));
     		button.setText(getActivity().getString(R.string.disable));
     		lockProgress.setEnabled(false);
-    		
+			
     	}else{
     		statusLayout.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorRed));
     		statusTextTitle.setText(getActivity().getString(R.string.not_protected));
@@ -211,11 +220,45 @@ public class MainFragment extends Fragment  {
 	 }
 	 
 	 private void enableLockProtection(){
-		 mDPM.setMaximumFailedPasswordsForWipe(mDeviceAdmin, lockProgress.getProgress());
-		 editor.putInt("unlockLimit",  lockProgress.getProgress());
-		 editor.putBoolean("lockEnabled", true);
-		 editor.commit();
-		 updateAdminCheck();
+         if (!isActiveAdmin()) {
+             Toast.makeText(getActivity(), "Enable Device Admin first.", Toast.LENGTH_LONG).show();
+             updateAdminCheck();
+             return;
+         }
+
+         try {
+             int attempts = lockProgress.getProgress();
+             if (attempts < MIN_FAILED_ATTEMPTS) {
+                 attempts = MIN_FAILED_ATTEMPTS;
+                 lockProgress.setProgress(attempts);
+             }
+
+		     mDPM.setMaximumFailedPasswordsForWipe(mDeviceAdmin, attempts);
+             int current = mDPM.getMaximumFailedPasswordsForWipe(mDeviceAdmin);
+
+		     editor.putInt("unlockLimit", current);
+		     editor.putBoolean("lockEnabled", current > 0);
+		     editor.commit();
+
+             Toast.makeText(
+                     getActivity(),
+                     "Wipe limit set to " + current + " failed attempts.",
+                     Toast.LENGTH_LONG
+             ).show();
+		     updateAdminCheck();
+
+         } catch (SecurityException e) {
+             editor.putBoolean("lockEnabled", false);
+             editor.commit();
+             Toast.makeText(getActivity(), "Security error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+             updateAdminCheck();
+
+         } catch (Exception e) {
+             editor.putBoolean("lockEnabled", false);
+             editor.commit();
+             Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+             updateAdminCheck();
+         }
 	 }
 	 
 	 private void showEnableProtectionDialog() {
@@ -235,9 +278,17 @@ public class MainFragment extends Fragment  {
 		    }
 	 
 	 private void disableLockProtection(){
+         try {
+             if (mDPM.isAdminActive(mDeviceAdmin)) {
+                 mDPM.setMaximumFailedPasswordsForWipe(mDeviceAdmin, 0);
+                 mDPM.removeActiveAdmin(mDeviceAdmin);
+             }
+         } catch (Exception e) {
+             Toast.makeText(getActivity(), "Error while disabling: " + e.getMessage(), Toast.LENGTH_LONG).show();
+         }
+
 		 editor.putBoolean("lockEnabled", false);
 		 editor.commit();
-		 mDPM.removeActiveAdmin(mDeviceAdmin);
 		 updateAdminCheck();
 		 checkBox.setChecked(false);
 	 }
