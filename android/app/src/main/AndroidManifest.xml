@@ -25,7 +25,8 @@
             android:name=".DeviceAdmin"
             android:description="@string/device_admin_summary"
             android:label="@string/device_admin"
-            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true" >
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/device_admin_policies" />
