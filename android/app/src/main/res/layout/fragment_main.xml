@@ -104,7 +104,7 @@
         android:textSize="30sp"
         android:textColor="#616161"
         android:layout_marginTop="10dp"
-        android:text="3" />
+        android:text="10" />
 
     <Button
         android:id="@+id/buttonApply"
