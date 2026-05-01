@@ -38,13 +38,34 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Restore release keystore
+        if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "ANDROID_KEYSTORE_BASE64 secret is missing" >&2
+            exit 1
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > locker-release.jks
+
       - name: Build debug APK
         if: ${{ github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Build unsigned release APK
+      - name: Build signed release APK
         if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both' }}
-        run: ./gradlew assembleRelease --stacktrace
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/android/locker-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "One or more signing secrets are missing" >&2
+            exit 1
+          fi
+          ./gradlew assembleRelease --stacktrace
 
       - name: Upload debug APK
         if: ${{ github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
@@ -54,10 +75,10 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Upload unsigned release APK
+      - name: Upload signed release APK
         if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Locker-release-unsigned-apk
+          name: Locker-release-signed-apk
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
