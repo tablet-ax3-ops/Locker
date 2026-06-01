@@ -6,31 +6,31 @@
 
     <!-- Main controls -->
     <string name="not_protected">Not protected</string>
-    <string name="not_protected_summary">Work profile wipe protection is currently disabled.</string>
+    <string name="not_protected_summary">Profile wipe protection is currently disabled.</string>
     <string name="protect">Protected</string>
-    <string name="protected_summary_one">Work profile will be erased after</string>
+    <string name="protected_summary_one">Profile will be erased after</string>
     <string name="protected_summary_two">failed unlock attempts.</string>
-    <string name="admin_summary">Locker needs Administrator access in the work profile to monitor failed unlock attempts and erase the work profile after the configured limit.</string>
+    <string name="admin_summary">Locker needs Administrator access in the profile to monitor failed unlock attempts and erase the profile after the configured limit.</string>
     <string name="admin_checkbox">Admin Enabled</string>
     <string name="attempts">Allowed Failed Attempts</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     
     <!--  Lock protection dialogs -->
-    <string name="lock_dialog_title">Enable work profile wipe protection?</string>
-    <string name="lock_dialog_summary">The work profile will be wiped after the specified number of failed unlock attempts. Use at least 10 attempts to avoid accidental data loss.</string>
+    <string name="lock_dialog_title">Enable profile wipe protection?</string>
+    <string name="lock_dialog_summary">The profile will be wiped after the specified number of failed unlock attempts. Use at least 10 attempts to avoid accidental data loss.</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="lock_disable_dialog_title">Disable work profile wipe protection?</string>
-    <string name="lock_disable_dialog_summary">The work profile will no longer be protected by a failed-attempt wipe limit.</string>
+    <string name="lock_disable_dialog_title">Disable profile wipe protection?</string>
+    <string name="lock_disable_dialog_summary">The profile will no longer be protected by a failed-attempt wipe limit.</string>
 
     <!--  Device Administration -->
     <string name="activity_sample_device_admin">Locker Administrator</string>
     <string name="device_admin">Locker</string>
-    <string name="device_admin_summary" translatable="false">Allow Locker to erase the work profile after numerous failed unlock attempts</string>
-    <string name="admin_receiver_status_enabled">Locker is now a work profile administrator</string>
-    <string name="admin_receiver_status_disable_warning">Locker will no longer be able to protect the work profile</string>
-    <string name="admin_receiver_status_disabled">Locker is no longer a work profile administrator</string>
-    <string name="add_admin_extra_app_text">Locker needs to monitor screen-unlock attempts and the ability to erase profile data in order to wipe the work profile after a configured number of failed unlock attempts.</string>
+    <string name="device_admin_summary" translatable="false">Allow Locker to erase the profile after numerous failed unlock attempts</string>
+    <string name="admin_receiver_status_enabled">Locker is now a profile administrator</string>
+    <string name="admin_receiver_status_disable_warning">Locker will no longer be able to protect the profile</string>
+    <string name="admin_receiver_status_disabled">Locker is no longer a profile administrator</string>
+    <string name="add_admin_extra_app_text">Locker needs to monitor screen-unlock attempts and the ability to erase profile data in order to wipe the profile after a configured number of failed unlock attempts.</string>
 
 </resources>
