@@ -11,6 +11,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +39,7 @@ public class MainFragment extends Fragment  {
 	private static final int DISABLE_PROTECTION_DIALOG_FRAGMENT = 6;
     private static final int MIN_FAILED_ATTEMPTS = 10;
     private static final int DEFAULT_FAILED_ATTEMPTS = 10;
+	private static final int PER_USER_RANGE = 100000;
 
 	/* Our preferences */
 	private SharedPreferences settings;
@@ -166,13 +168,18 @@ public class MainFragment extends Fragment  {
     	lockProgress.setProgress(savedLimit);
     	
 	}
+
+	private String getStatusTitleWithUserId(int titleResId){
+    	int userId = Process.myUid() / PER_USER_RANGE;
+    	return getActivity().getString(titleResId) + "\nUser ID: " + userId;
+	}
 	
 	private void updateLockStatus(){
 		boolean isProtected = settings.getBoolean("lockEnabled", false);
 		
     	if (isProtected){
 			statusLayout.setBackgroundColor(getResources().getColor(R.color.colorGreen));
-    		statusTextTitle.setText(getActivity().getString(R.string.protect));
+			statusTextTitle.setText(getStatusTitleWithUserId(R.string.protect));
     		int unlockLimit = settings.getInt("unlockLimit", DEFAULT_FAILED_ATTEMPTS);
             if (unlockLimit < MIN_FAILED_ATTEMPTS) {
                 unlockLimit = MIN_FAILED_ATTEMPTS;
@@ -185,7 +192,7 @@ public class MainFragment extends Fragment  {
 			
     	}else{
     		statusLayout.setBackgroundColor(getResources().getColor(R.color.colorRed));
-    		statusTextTitle.setText(getActivity().getString(R.string.not_protected));
+			statusTextTitle.setText(getStatusTitleWithUserId(R.string.not_protected));
     		statusTextSummary.setText(getActivity().getString(R.string.not_protected_summary));
     		button.setText(getActivity().getString(R.string.enable));
     		lockProgress.setEnabled(true);
